@@ -15,7 +15,7 @@ import CompleteStep from "./steps/CompleteStep";
 import LoadingStep from "./steps/LoadingStep";
 import SuccessStep from "./steps/SuccessStep";
 
-import ProfilePage from "../Profile/ProfilePage";
+import AppShell from "../layout/AppShell";
 
 export default function OnboardingFlow() {
   const { get, put } = useApi();
@@ -250,11 +250,11 @@ if (step === 9) {
 }
 
 if (step === 10) {
-  return (
-    <ProfilePage
-      profile={formData}
-    />
-  );
+return (
+<AppShell
+profile={formData}
+/>
+);
 }
 
 return null;
