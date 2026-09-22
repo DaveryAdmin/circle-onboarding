@@ -1,92 +1,8 @@
 const db = require("../models/db");
 
-const PROFILE_FIELDS = [
-  "full_name",
-  "email",
-  "timezone",
-  "username",
-  "age",
-  "location1",
-  "website",
-  "what_describes_you_best",
-  "interests_and_passions",
-  "what_i_am_looking_for",
-  "relationship_status",
-  "relationship_status_other",
-  "how_do_you_see_yourself_here",
-  "write_a_few_words_about_your_journey",
-  "best_ways_to_connect",
-  "onboarding_complete",
-];
-
-const ARRAY_FIELDS = [
-  "what_describes_you_best",
-  "interests_and_passions",
-  "how_do_you_see_yourself_here",
-  "best_ways_to_connect",
-];
-
-function normalizeProfileInput(body = {}) {
-  const profile = {};
-
-  for (const field of PROFILE_FIELDS) {
-    if (
-      Object.prototype.hasOwnProperty.call(
-        body,
-        field
-      )
-    ) {
-      profile[field] = body[field];
-    }
-  }
-
-  for (const field of ARRAY_FIELDS) {
-    if (
-      Object.prototype.hasOwnProperty.call(
-        profile,
-        field
-      )
-    ) {
-      profile[field] = Array.isArray(
-        profile[field]
-      )
-        ? profile[field]
-        : [];
-    }
-  }
-
-  if (
-    Object.prototype.hasOwnProperty.call(
-      profile,
-      "age"
-    )
-  ) {
-    if (
-      profile.age === "" ||
-      profile.age === null
-    ) {
-      profile.age = null;
-    } else {
-      const parsedAge = Number(
-        profile.age
-      );
-
-      profile.age = Number.isFinite(
-        parsedAge
-      )
-        ? parsedAge
-        : null;
-    }
-  }
-
-  return profile;
-}
-
 const getMyProfile = async (req, res) => {
   try {
-    const profile = await db(
-      "member_profiles"
-    )
+    const profile = await db("member_profiles")
       .where({
         user_id: req.user.sub,
       })
@@ -110,26 +26,59 @@ const getMyProfile = async (req, res) => {
 
 const saveMyProfile = async (req, res) => {
   try {
-    const profileInput =
-      normalizeProfileInput(req.body);
-
-    if (
-      !profileInput.full_name ||
-      !profileInput.username
-    ) {
-      return res.status(400).json({
-        error:
-          "Full name and username are required",
-      });
-    }
-
     const now = new Date().toISOString();
 
     const record = {
-      ...profileInput,
+      full_name: req.body.full_name,
+      email: req.body.email,
+      timezone: req.body.timezone,
+      username: req.body.username,
+      age: req.body.age
+        ? Number(req.body.age)
+        : null,
+      location1: req.body.location1,
+      website: req.body.website,
+
+      what_describes_you_best: JSON.stringify(
+        req.body.what_describes_you_best || []
+      ),
+
+      interests_and_passions: JSON.stringify(
+        req.body.interests_and_passions || []
+      ),
+
+      what_i_am_looking_for:
+        req.body.what_i_am_looking_for,
+
+      relationship_status:
+        req.body.relationship_status,
+
+      relationship_status_other:
+        req.body.relationship_status_other,
+
+      how_do_you_see_yourself_here:
+        JSON.stringify(
+          req.body
+            .how_do_you_see_yourself_here || []
+        ),
+
+      write_a_few_words_about_your_journey:
+        req.body
+          .write_a_few_words_about_your_journey,
+
+      best_ways_to_connect:
+        JSON.stringify(
+          req.body.best_ways_to_connect || []
+        ),
+
+      onboarding_complete:
+        req.body.onboarding_complete === true,
+
       user_id: req.user.sub,
+
       circle_id:
         req.user.circleId || null,
+
       updated_at: now,
     };
 
@@ -141,10 +90,10 @@ const saveMyProfile = async (req, res) => {
       })
       .first();
 
-    let savedProfile;
+    let profile;
 
     if (existing) {
-      const updatedProfiles = await db(
+      const result = await db(
         "member_profiles"
       )
         .where({
@@ -153,10 +102,9 @@ const saveMyProfile = async (req, res) => {
         .update(record)
         .returning("*");
 
-      savedProfile =
-        updatedProfiles[0];
+      profile = result[0];
     } else {
-      const insertedProfiles = await db(
+      const result = await db(
         "member_profiles"
       )
         .insert({
@@ -165,24 +113,14 @@ const saveMyProfile = async (req, res) => {
         })
         .returning("*");
 
-      savedProfile =
-        insertedProfiles[0];
+      profile = result[0];
     }
 
-    return res.status(
-      existing ? 200 : 201
-    ).json({
-      profile: savedProfile,
+    return res.json({
+      profile,
     });
   } catch (err) {
-    if (
-      err.code === "23505"
-    ) {
-      return res.status(409).json({
-        error:
-          "That username is already in use",
-      });
-    }
+    console.error(err);
 
     return res.status(500).json({
       error: err.message,
@@ -192,87 +130,16 @@ const saveMyProfile = async (req, res) => {
 
 const listProfiles = async (req, res) => {
   try {
-    const relationshipStatus =
-      req.query.relationship_status;
-
-    const location =
-      req.query.location;
-
-    const search =
-      String(
-        req.query.search || ""
-      ).trim();
-
-    const query = db(
+    const profiles = await db(
       "member_profiles"
     )
-      .select([
-        "id",
-        "user_id",
-        "full_name",
-        "username",
-        "age",
-        "location1",
-        "website",
-        "what_describes_you_best",
-        "interests_and_passions",
-        "what_i_am_looking_for",
-        "relationship_status",
-        "relationship_status_other",
-        "how_do_you_see_yourself_here",
-        "write_a_few_words_about_your_journey",
-        "best_ways_to_connect",
-        "created_at",
-        "updated_at",
-      ])
       .where({
         onboarding_complete: true,
-      });
-
-    if (relationshipStatus) {
-      query.andWhere(
-        "relationship_status",
-        relationshipStatus
+      })
+      .orderBy(
+        "created_at",
+        "desc"
       );
-    }
-
-    if (location) {
-      query.andWhere(
-        "location1",
-        location
-      );
-    }
-
-    if (search) {
-      query.andWhere((builder) => {
-        builder
-          .whereILike(
-            "full_name",
-            `%${search}%`
-          )
-          .orWhereILike(
-            "username",
-            `%${search}%`
-          )
-          .orWhereILike(
-            "location1",
-            `%${search}%`
-          )
-          .orWhereRaw(
-            "interests_and_passions::text ILIKE ?",
-            [`%${search}%`]
-          )
-          .orWhereRaw(
-            "how_do_you_see_yourself_here::text ILIKE ?",
-            [`%${search}%`]
-          );
-      });
-    }
-
-    const profiles = await query.orderBy(
-      "created_at",
-      "desc"
-    );
 
     return res.json({
       profiles,
@@ -294,7 +161,6 @@ const getProfileById = async (
     )
       .where({
         id: req.params.id,
-        onboarding_complete: true,
       })
       .first();
 
@@ -304,36 +170,8 @@ const getProfileById = async (
       });
     }
 
-    const publicProfile = {
-      id: profile.id,
-      user_id: profile.user_id,
-      full_name: profile.full_name,
-      username: profile.username,
-      age: profile.age,
-      location1: profile.location1,
-      website: profile.website,
-      what_describes_you_best:
-        profile.what_describes_you_best,
-      interests_and_passions:
-        profile.interests_and_passions,
-      what_i_am_looking_for:
-        profile.what_i_am_looking_for,
-      relationship_status:
-        profile.relationship_status,
-      relationship_status_other:
-        profile.relationship_status_other,
-      how_do_you_see_yourself_here:
-        profile.how_do_you_see_yourself_here,
-      write_a_few_words_about_your_journey:
-        profile.write_a_few_words_about_your_journey,
-      best_ways_to_connect:
-        profile.best_ways_to_connect,
-      created_at: profile.created_at,
-      updated_at: profile.updated_at,
-    };
-
     return res.json({
-      profile: publicProfile,
+      profile,
     });
   } catch (err) {
     return res.status(500).json({

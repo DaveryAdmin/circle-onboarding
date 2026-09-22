@@ -1,10 +1,15 @@
-import React from "react";
+import React, { useState } from "react";
+ 
+import MemberDirectory from "../Members/MemberDirectory";
  
 const orange = "#E9752B";
  
 export default function ProfilePage({
 profile,
 }) {
+const [showDirectory, setShowDirectory] =
+useState(false);
+ 
 const initials =
 profile.full_name
 ?.split(" ")
@@ -12,6 +17,39 @@ profile.full_name
 .join("")
 .substring(0, 2)
 .toUpperCase() || "?";
+ 
+if (showDirectory) {
+return (
+<div>
+<div
+style={{
+maxWidth: "1200px",
+margin: "0 auto",
+padding: "24px",
+}}
+>
+<button
+onClick={() =>
+setShowDirectory(false)
+}
+style={{
+background: orange,
+color: "#ffffff",
+border: "none",
+padding: "12px 20px",
+borderRadius: "8px",
+cursor: "pointer",
+fontWeight: "600",
+}}
+>
+← Back To My Profile
+</button>
+</div>
+ 
+<MemberDirectory />
+</div>
+);
+}
  
 return (
 <div
@@ -81,6 +119,29 @@ color: "#666",
 >
 {profile.location1}
 </div>
+ 
+<div
+style={{
+marginTop: "18px",
+}}
+>
+<button
+onClick={() =>
+setShowDirectory(true)
+}
+style={{
+background: orange,
+color: "#ffffff",
+border: "none",
+padding: "12px 20px",
+borderRadius: "8px",
+cursor: "pointer",
+fontWeight: "600",
+}}
+>
+Browse Members
+</button>
+</div>
 </div>
 </div>
 </div>
@@ -106,28 +167,32 @@ profile.what_i_am_looking_for
 <TagSection
 title="🌿 Personality"
 items={
-profile.what_describes_you_best || []
+profile.what_describes_you_best ||
+[]
 }
 />
  
 <TagSection
 title="🎨 Interests"
 items={
-profile.interests_and_passions || []
+profile.interests_and_passions ||
+[]
 }
 />
  
 <TagSection
 title="🤝 Community Role"
 items={
-profile.how_do_you_see_yourself_here || []
+profile.how_do_you_see_yourself_here ||
+[]
 }
 />
  
 <TagSection
 title="💬 Ways To Connect"
 items={
-profile.best_ways_to_connect || []
+profile.best_ways_to_connect ||
+[]
 }
 />
 </div>
@@ -196,10 +261,8 @@ style={{
 background: "#FFF6F0",
 border:
 "1px solid #F3E3D7",
-padding:
-"8px 14px",
-borderRadius:
-"999px",
+padding: "8px 14px",
+borderRadius: "999px",
 }}
 >
 {item}
