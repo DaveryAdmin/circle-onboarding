@@ -1,0 +1,20 @@
+/* global.css — Circle Onboarding */
+:root {
+  --color-primary: #6366F1;
+  --color-primary-dark: #4F46E5;
+  --color-bg: #F9FAFB;
+  --color-surface: #FFFFFF;
+  --color-border: #E5E7EB;
+  --color-text: #111827;
+  --color-text-secondary: #6B7280;
+  --radius-md: 12px;
+  --radius-lg: 20px;
+  --font-sans: 'Inter', system-ui, sans-serif;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: var(--font-sans); background: var(--color-bg); color: var(--color-text); }
+.btn { cursor: pointer; border: none; border-radius: var(--radius-md); font-weight: 600; transition: all 0.2s; }
+.btn-primary { background: var(--color-primary); color: white; }
+.btn-primary:hover { background: var(--color-primary-dark); }
+.btn-lg { padding: 12px 32px; font-size: 16px; }
