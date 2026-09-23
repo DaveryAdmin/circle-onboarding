@@ -1,5 +1,6 @@
-import { useAuth } from "../context/AuthContext";
 import { useCallback } from "react";
+
+import { useAuth } from "../context/AuthContext";
 
 const BASE_URL =
   import.meta.env.VITE_API_BASE_URL ??
@@ -10,37 +11,57 @@ export const useApi = () => {
 
   const request = useCallback(
     async (path, options = {}) => {
-      const res = await fetch(
+      const response = await fetch(
         BASE_URL + path,
         {
           ...options,
 
+          cache: "no-store",
+
           headers: {
+            Accept: "application/json",
             "Content-Type":
               "application/json",
+            "Cache-Control":
+              "no-cache",
 
             Authorization:
-              "Bearer " + token,
+              `Bearer ${token}`,
 
             ...options.headers,
           },
         }
       );
 
-      if (res.status === 401) {
+      if (response.status === 401) {
         logout();
+
         throw new Error(
           "Session expired"
         );
       }
 
-      const data =
-        await res.json();
+      const responseText =
+        await response.text();
 
-      if (!res.ok) {
+      let data = {};
+
+      if (responseText) {
+        try {
+          data = JSON.parse(
+            responseText
+          );
+        } catch {
+          throw new Error(
+            "The server returned an invalid response."
+          );
+        }
+      }
+
+      if (!response.ok) {
         throw new Error(
-          data.error ??
-            "HTTP " + res.status
+          data.error ||
+            `HTTP ${response.status}`
         );
       }
 
@@ -49,28 +70,46 @@ export const useApi = () => {
     [token, logout]
   );
 
-  const get = (path) =>
-    request(path, {
-      method: "GET",
-    });
+  const get = useCallback(
+    (path) =>
+      request(path, {
+        method: "GET",
+      }),
+    [request]
+  );
 
-  const post = (path, body) =>
-    request(path, {
-      method: "POST",
-      body: JSON.stringify(body),
-    });
+  const post = useCallback(
+    (path, body) =>
+      request(path, {
+        method: "POST",
+        body: JSON.stringify(
+          body
+        ),
+      }),
+    [request]
+  );
 
-  const patch = (path, body) =>
-    request(path, {
-      method: "PATCH",
-      body: JSON.stringify(body),
-    });
+  const patch = useCallback(
+    (path, body) =>
+      request(path, {
+        method: "PATCH",
+        body: JSON.stringify(
+          body
+        ),
+      }),
+    [request]
+  );
 
-  const put = (path, body) =>
-    request(path, {
-      method: "PUT",
-      body: JSON.stringify(body),
-    });
+  const put = useCallback(
+    (path, body) =>
+      request(path, {
+        method: "PUT",
+        body: JSON.stringify(
+          body
+        ),
+      }),
+    [request]
+  );
 
   return {
     get,
