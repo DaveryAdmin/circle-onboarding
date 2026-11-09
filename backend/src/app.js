@@ -27,6 +27,10 @@ const memberProfileRoutes = require(
   "./routes/memberProfile"
 );
 
+const adminRoutes = require(
+  "./routes/admin"
+);
+
 const devSsoRoutes = require(
   "./routes/dev-sso"
 );
@@ -109,6 +113,11 @@ app.use(
 app.use(
   "/api/member-profiles",
   memberProfileRoutes
+);
+
+app.use(
+  "/api/admin",
+  adminRoutes
 );
 
 app.use(

@@ -9,7 +9,7 @@ seedTestMembers,
 deleteTestMembers,
 resetMyProfile,
 } = require(
-"../controllers/adminController"
+"../controllers/admincontroller"
 );
  
 const router = express.Router();

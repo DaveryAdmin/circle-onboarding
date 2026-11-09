@@ -32,7 +32,10 @@ const EMPTY_PROFILE = {
   interests_and_passions: [],
 
   what_i_am_looking_for: "",
-  relationship_status: "",
+
+  // Relationship status is now multi-select
+  relationship_status: [],
+
   relationship_status_other: "",
 
   how_do_you_see_yourself_here: [],
@@ -112,6 +115,10 @@ export default function OnboardingFlow() {
 
         if (response.status === 404) {
           if (!cancelled) {
+            setFormData(
+              EMPTY_PROFILE
+            );
+
             setStep(1);
           }
 
@@ -131,8 +138,28 @@ export default function OnboardingFlow() {
           !cancelled &&
           result?.profile
         ) {
+          const loadedProfile = {
+            ...EMPTY_PROFILE,
+            ...result.profile,
+
+            relationship_status:
+              Array.isArray(
+                result.profile
+                  .relationship_status
+              )
+                ? result.profile
+                    .relationship_status
+                : result.profile
+                    .relationship_status
+                ? [
+                    result.profile
+                      .relationship_status,
+                  ]
+                : [],
+          };
+
           setFormData(
-            result.profile
+            loadedProfile
           );
 
           setStep(10);
@@ -144,6 +171,10 @@ export default function OnboardingFlow() {
         );
 
         if (!cancelled) {
+          setFormData(
+            EMPTY_PROFILE
+          );
+
           setStep(1);
         }
       } finally {
@@ -170,20 +201,49 @@ export default function OnboardingFlow() {
     setStep(8);
 
     try {
+      const profileToSave = {
+        ...formData,
+
+        relationship_status:
+          Array.isArray(
+            formData.relationship_status
+          )
+            ? formData.relationship_status
+            : formData.relationship_status
+            ? [
+                formData.relationship_status,
+              ]
+            : [],
+
+        onboarding_complete:
+          true,
+      };
+
       const result = await put(
         "/member-profiles/me",
-        {
-          ...formData,
-
-          onboarding_complete:
-            true,
-        }
+        profileToSave
       );
 
       if (result?.profile) {
-        setFormData(
-          result.profile
-        );
+        setFormData({
+          ...EMPTY_PROFILE,
+          ...result.profile,
+
+          relationship_status:
+            Array.isArray(
+              result.profile
+                .relationship_status
+            )
+              ? result.profile
+                  .relationship_status
+              : result.profile
+                  .relationship_status
+              ? [
+                  result.profile
+                    .relationship_status,
+                ]
+              : [],
+        });
       }
 
       window.setTimeout(() => {

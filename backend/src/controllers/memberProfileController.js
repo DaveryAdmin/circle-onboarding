@@ -1,8 +1,35 @@
 const db = require("../models/db");
 
+function normalizeArray(value) {
+  if (Array.isArray(value)) {
+    return value.filter(Boolean);
+  }
+
+  if (
+    typeof value === "string" &&
+    value.trim()
+  ) {
+    try {
+      const parsed = JSON.parse(value);
+
+      if (Array.isArray(parsed)) {
+        return parsed.filter(Boolean);
+      }
+    } catch (error) {
+      return [value];
+    }
+
+    return [value];
+  }
+
+  return [];
+}
+
 const getMyProfile = async (req, res) => {
   try {
-    const profile = await db("member_profiles")
+    const profile = await db(
+      "member_profiles"
+    )
       .where({
         user_id: req.user.sub,
       })
@@ -15,7 +42,13 @@ const getMyProfile = async (req, res) => {
     }
 
     return res.json({
-      profile,
+      profile: {
+        ...profile,
+        relationship_status:
+          normalizeArray(
+            profile.relationship_status
+          ),
+      },
     });
   } catch (err) {
     return res.status(500).json({
@@ -24,7 +57,10 @@ const getMyProfile = async (req, res) => {
   }
 };
 
-const saveMyProfile = async (req, res) => {
+const saveMyProfile = async (
+  req,
+  res
+) => {
   try {
     const now = new Date().toISOString();
 
@@ -33,33 +69,50 @@ const saveMyProfile = async (req, res) => {
       email: req.body.email,
       timezone: req.body.timezone,
       username: req.body.username,
+
       age: req.body.age
         ? Number(req.body.age)
         : null,
+
       location1: req.body.location1,
       website: req.body.website,
 
-      what_describes_you_best: JSON.stringify(
-        req.body.what_describes_you_best || []
-      ),
+      what_describes_you_best:
+        JSON.stringify(
+          normalizeArray(
+            req.body
+              .what_describes_you_best
+          )
+        ),
 
-      interests_and_passions: JSON.stringify(
-        req.body.interests_and_passions || []
-      ),
+      interests_and_passions:
+        JSON.stringify(
+          normalizeArray(
+            req.body
+              .interests_and_passions
+          )
+        ),
 
       what_i_am_looking_for:
         req.body.what_i_am_looking_for,
 
       relationship_status:
-        req.body.relationship_status,
+        JSON.stringify(
+          normalizeArray(
+            req.body.relationship_status
+          )
+        ),
 
       relationship_status_other:
-        req.body.relationship_status_other,
+        req.body
+          .relationship_status_other,
 
       how_do_you_see_yourself_here:
         JSON.stringify(
-          req.body
-            .how_do_you_see_yourself_here || []
+          normalizeArray(
+            req.body
+              .how_do_you_see_yourself_here
+          )
         ),
 
       write_a_few_words_about_your_journey:
@@ -68,11 +121,14 @@ const saveMyProfile = async (req, res) => {
 
       best_ways_to_connect:
         JSON.stringify(
-          req.body.best_ways_to_connect || []
+          normalizeArray(
+            req.body.best_ways_to_connect
+          )
         ),
 
       onboarding_complete:
-        req.body.onboarding_complete === true,
+        req.body
+          .onboarding_complete === true,
 
       user_id: req.user.sub,
 
@@ -117,7 +173,13 @@ const saveMyProfile = async (req, res) => {
     }
 
     return res.json({
-      profile,
+      profile: {
+        ...profile,
+        relationship_status:
+          normalizeArray(
+            profile.relationship_status
+          ),
+      },
     });
   } catch (err) {
     console.error(err);
@@ -128,7 +190,10 @@ const saveMyProfile = async (req, res) => {
   }
 };
 
-const listProfiles = async (req, res) => {
+const listProfiles = async (
+  req,
+  res
+) => {
   try {
     const profiles = await db(
       "member_profiles"
@@ -141,8 +206,18 @@ const listProfiles = async (req, res) => {
         "desc"
       );
 
+    const normalizedProfiles =
+      profiles.map((profile) => ({
+        ...profile,
+
+        relationship_status:
+          normalizeArray(
+            profile.relationship_status
+          ),
+      }));
+
     return res.json({
-      profiles,
+      profiles: normalizedProfiles,
     });
   } catch (err) {
     return res.status(500).json({
@@ -171,7 +246,13 @@ const getProfileById = async (
     }
 
     return res.json({
-      profile,
+      profile: {
+        ...profile,
+        relationship_status:
+          normalizeArray(
+            profile.relationship_status
+          ),
+      },
     });
   } catch (err) {
     return res.status(500).json({
